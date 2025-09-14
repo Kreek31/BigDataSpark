@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter_spark
+    restart: always
+    environment:
+      JUPYTER_TOKEN: mysecuretoken
+      SPARK_HOME: /usr/local/spark
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./db/data:/data:ro
+      - ./jars/postgresql-42.7.7.jar:/usr/local/spark/jars/postgresql-42.7.7.jar:ro
+      - ./jars/clickhouse-spark-runtime-3.5_2.12-0.8.1.jar:/usr/local/spark/jars/clickhouse-spark-runtime-3.5_2.12-0.8.1.jar:ro
+      - ./jars/clickhouse-jdbc-0.9.0-all.jar:/usr/local/spark/jars/clickhouse-jdbc-0.9.0-all.jar:ro
+      - ./jars/clickhouse-jdbc-0.9.0.jar:/usr/local/spark/jars/clickhouse-jdbc-0.9.0.jar:ro
+      - ./spark/conf/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+    ports:
+      - "7077:7077"    # Spark master port
+      - "8081:8080"    # Web UI
+    volumes:
+      - spark_data:/bitnami/spark
+      - ./spark/conf/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+
+  spark-worker:
+    image: bitnami/spark:latest
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+    depends_on:
+      - spark-master
+    ports:
+      - "8082:8081"    # Web UI for worker
+    volumes:
+      - spark_data:/bitnami/spark
+      - ./spark/conf/spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf:ro
+
+volumes:
+  pgdata_abd_lr2:
+  spark_data:

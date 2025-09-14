@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  db:
+    build: ./db
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres       # замените на своего пользователя
+      POSTGRES_PASSWORD: 14LgiN   # замените на свой пароль
+      POSTGRES_DB: abd_lr2     # имя создаваемой БД
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/data:/data:ro
+      - ./db/init:/mnt/init:ro
+      - pgdata_abd_lr2:/var/lib/postgresql/data
+      
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: misha.fedorov2004@gmail.com   # логин для pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: 14LgiN            # пароль для pgAdmin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  pgdata_abd_lr2:
